@@ -14,3 +14,6 @@ beautifulsoup4
 requests
 datetime
 haversine
+lightgbm
+imblearn
+time
