@@ -178,13 +178,13 @@ prob = model_after_oversmapling.predict_proba(df.drop(columns = '지점번호'))
 prob = ['{}'.format(list(map(lambda x: f'{x:.5f}', num))) for num in prob]
 
 # Add a placeholder 진행 상황 바
-# latest_iteration = st.empty()
-# bar = st.progress(0)
-# for i in range(100):
-#     # Update the progress bar with each iteration.
-#     latest_iteration.text(f'Iteration {i+1}')
-#     bar.progress(i + 1)
-#     time.sleep(0.01)
+latest_iteration = st.empty()
+bar = st.progress(0)
+for i in range(100):
+    # Update the progress bar with each iteration.
+    latest_iteration.text(f'Iteration {i+1}')
+    bar.progress(i + 1)
+    time.sleep(0.01)
     
 if pred[0] == 1:
     text = '<span style="color:red;font-weight:bold;">산불에 유의하세요.</span>'
