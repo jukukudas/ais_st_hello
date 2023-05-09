@@ -79,7 +79,7 @@ st_data = st_folium(m, width=500, height = 500)
 
 # ======================== 압력받은 위도 경도 기준으로 가장 가까운 지점 기상 정보 출력 ========================
 
-지점 = pd.read_csv('관측지점_번호포함.csv', encoding = 'cp949')
+지점 = pd.read_csv('관측지점_번호포함.csv')
 
 now = datetime.now()
 current_time = now.strftime("%H%M")[:2] + '00'
@@ -143,7 +143,7 @@ st.dataframe(df)
 
 # ======================== 머신러닝 ========================
 
-이진분류_data = pd.read_csv('이진분류_train.csv', encoding = 'cp949')
+이진분류_data = pd.read_csv('이진분류_train.csv')
 
 X_train = 이진분류_data[이진분류_data['년도'] < 2017].drop(columns = ['화재', '년도'])
 X_test = 이진분류_data[이진분류_data['년도'] >= 2017].drop(columns = ['화재', '년도'])
