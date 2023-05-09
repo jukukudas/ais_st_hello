@@ -1,9 +1,16 @@
 pandas
 numpy
+PIL
 streamlit
 finance-datareader
+pydeck
 plotly
 seaborn
 matplotlib
+folium
+streamlit_folium
 koreanize-matplotlib
 beautifulsoup4
+requests
+datetime
+haversine
