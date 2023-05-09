@@ -11,6 +11,11 @@ import requests
 from datetime import datetime
 from haversine import haversine
 
+from lightgbm import LGBMClassifier
+from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import ADASYN
+import time
+
 # ======================== 사이드바 ========================
 # 이미지 올리기
 img ='https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbsG7Rw%2Fbtseqb1XFui%2FVPbpTzdZKLVxiKzlHN42BK%2Fimg.png'
@@ -105,7 +110,6 @@ min_index = 비교.index(min(비교))
 # ======
 
 response = requests.get(f'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-aws2_min?stn={최근접_관측번호}&disp=0&help=2&authKey=NermpuOATlGq5qbjgF5RBQ')
-response.content
 
 # '기온(°C)', '풍향(deg)', '풍속(m/s)', '강수량(mm)', '습도(%)'
 data = response.content
@@ -128,4 +132,65 @@ df = df[['STN', 'TA', 'WD10', 'WS10', 'RN-DAY', 'HM']].rename(columns={ 'STN' : 
                                                                         'RN-DAY' : '강수량(mm)',
                                                                         'HM' : '습도(%)'})
 
+df = df.astype({'기온(°C)' : 'float64',
+                                    '풍향(deg)' : 'float64',
+                                    '풍속(m/s)' : 'float64',
+                                    '강수량(mm)' : 'float64',
+                                    '습도(%)' : 'float64',})
+
+
 st.dataframe(df)
+
+# ======================== 머신러닝 ========================
+
+이진분류_data = pd.read_csv('이진분류_train.csv')
+
+X_train = 이진분류_data[이진분류_data['년도'] < 2017].drop(columns = ['화재', '년도'])
+X_test = 이진분류_data[이진분류_data['년도'] >= 2017].drop(columns = ['화재', '년도'])
+y_train = 이진분류_data[이진분류_data['년도'] < 2017]['화재']
+y_test = 이진분류_data[이진분류_data['년도'] >= 2017]['화재']
+
+# SMOTE 오버샘플링 적용
+# random_state=0
+smote = SMOTE(k_neighbors=4)
+X_train_over_SMOTE, y_train_over_SMOTE = smote.fit_resample(X_train,y_train)
+
+
+# ADASYN 오버샘플링 적용
+
+adasyn = ADASYN(n_neighbors=4)
+X_train_over_ADASYN, y_train_over_ADASYN = adasyn.fit_resample(X_train,y_train)
+
+
+model_after_oversmapling = LGBMClassifier( n_jobs = -1,
+                        learning_rate = 0.01,
+                        n_estimators = 1000,
+                        num_leaves =  32,
+                        max_depth =  7,
+                        min_child_samples =  10,
+                        colsample_bytree =  0.9,
+                        boost_from_average = True )
+
+model_after_oversmapling.fit(X_train_over_SMOTE,y_train_over_SMOTE)
+
+pred = model_after_oversmapling.predict(df.drop(columns = '지점번호'))
+prob = model_after_oversmapling.predict_proba(df.drop(columns = '지점번호'))
+prob = ['{}'.format(list(map(lambda x: f'{x:.5f}', num))) for num in prob]
+
+# Add a placeholder 진행 상황 바
+latest_iteration = st.empty()
+bar = st.progress(0)
+for i in range(100):
+    # Update the progress bar with each iteration.
+    latest_iteration.text(f'Iteration {i+1}')
+    bar.progress(i + 1)
+    time.sleep(0.01)
+    
+if pred[0] == 1:
+    text = '<span style="color:red;font-weight:bold;">산불에 유의하세요.</span>'
+else:
+    text = '<span style="color:green;font-weight:bold;">산불에 안전합니다.</span>'
+
+
+st.markdown(text, unsafe_allow_html=True)
+st.text(f"예측 확률: {prob}")
