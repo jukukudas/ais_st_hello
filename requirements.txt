@@ -1,6 +1,6 @@
 pandas
 numpy
-PIL
+pillow
 streamlit
 finance-datareader
 pydeck
